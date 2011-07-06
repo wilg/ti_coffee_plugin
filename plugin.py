@@ -6,7 +6,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -100,12 +100,16 @@ def build_coffee(path, targetpath):
 	command_args = ['coffee', '-b', '-c', '-o', targetpath, path]
 	if not os.path.exists(targetpath):
 		os.makedirs(targetpath)
-	process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+	process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
 	result = process.wait()
 	if result != 0:
 		msg = process.stderr.read()
 		if msg:
-			err("%s (%s)" % (msg, path))
+			if msg.find("\n"):
+				msg1 = msg[:msg.find("\n")]
+			else:
+				msg1 = msg
+			err("%s (%s)" % (msg1, path))
 		else:
 			err("CoffeeScript compiler call for %s failed but no error message was generated" % path)
 		return False
@@ -132,6 +136,9 @@ def build_all_coffee(basepath, coffeepath, resoursepath, file_hash_folder):
 							file_hashes[file_path] != digest):
 					if build_coffee(file_path, target_path):
 						file_hashes[file_path] = digest
+					else:
+						file_hashes[file_path] = None
+						os.remove("%s.js" % file_path[:-7])
 	write_file_hashes(file_hash_folder, file_hashes)
 
 
@@ -151,7 +158,7 @@ if __name__ == "__main__":
 
 	if os.path.exists(coffeesource_dir):
 		if not os.path.exists(resource_dir):
-			err("%s does not look like Titanium project folder.  Resources/ folder not found." % proj_dir, sys.stderr)
+			err("%s does not look like Titanium project folder.	 Resources/ folder not found." % proj_dir, sys.stderr)
 		config = {'project_dir': proj_dir}
 		if os.path.exists(os.path.join(proj_dir, 'build')):
 			compile(config, os.path.join(proj_dir, 'build'))
