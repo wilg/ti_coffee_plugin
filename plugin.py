@@ -95,9 +95,11 @@ def get_md5_digest(path):
 	f.close()
 	return hashlib.md5(contents).hexdigest()
 
-def build_coffee(path):
+def build_coffee(path, targetpath):
 	debug('Compiling %s' % path)
-	command_args = ['coffee', '-b', '-c', path]
+	command_args = ['coffee', '-b', '-c', '-o', targetpath, path]
+	if not os.path.exists(targetpath):
+		os.makedirs(targetpath)
 	process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
 	result = process.wait()
 	if result != 0:
@@ -109,20 +111,26 @@ def build_coffee(path):
 		return False
 	return True
 
-def build_all_coffee(path, file_hash_folder):
+def build_all_coffee(basepath, coffeepath, resoursepath, file_hash_folder):
 	info_msg_shown = False
 	file_hashes = read_file_hashes(file_hash_folder)
-	for root, dirs, files in os.walk(path):
+	for root, dirs, files in os.walk(os.path.join(basepath, coffeepath)):
 		for name in files:
 			if name.endswith('.coffee'):
 				if not info_msg_shown:
 					info("Compiling CoffeeScript files")
+					info("\t%s" % (name,))
 					info_msg_shown = True
+				else:
+					info("\t%s" % (name,))
+
 				file_path = os.path.join(root, name)
+				target_path = root.replace(coffeepath, resoursepath, 1)
 				digest = get_md5_digest(file_path)
-				if (not file_path in file_hashes) or (
+				if (not os.path.exists(os.path.join(target_path, name)) or
+						not file_path in file_hashes) or (
 							file_hashes[file_path] != digest):
-					if build_coffee(file_path):
+					if build_coffee(file_path, target_path):
 						file_hashes[file_path] = digest
 	write_file_hashes(file_hash_folder, file_hashes)
 
@@ -130,7 +138,7 @@ def build_all_coffee(path, file_hash_folder):
 def compile(config, file_hash_folder=None):
 	if file_hash_folder is None:
 		file_hash_folder = os.path.abspath(os.path.join(config['build_dir'], '..'))
-	build_all_coffee(os.path.join(config['project_dir'], 'Resources'), file_hash_folder)
+	build_all_coffee(config['project_dir'], 'CoffeeSources', 'Resources', file_hash_folder)
 
 if __name__ == "__main__":
 	proj_dir = None
@@ -139,11 +147,16 @@ if __name__ == "__main__":
 	else:
 		proj_dir = sys.argv[1]
 	resource_dir = os.path.join(proj_dir, 'Resources')
-	if not os.path.exists(resource_dir):
-		err("%s does not look like Titanium project folder.  Resources/ folder not found." % proj_dir, sys.stderr)
-	config = {'project_dir': proj_dir}
-	if os.path.exists(os.path.join(proj_dir, 'build')):
-		compile(config, os.path.join(proj_dir, 'build'))
+	coffeesource_dir = os.path.join(proj_dir, 'CoffeeSources')
+
+	if os.path.exists(coffeesource_dir):
+		if not os.path.exists(resource_dir):
+			err("%s does not look like Titanium project folder.  Resources/ folder not found." % proj_dir, sys.stderr)
+		config = {'project_dir': proj_dir}
+		if os.path.exists(os.path.join(proj_dir, 'build')):
+			compile(config, os.path.join(proj_dir, 'build'))
+		else:
+			compile(config, proj_dir)
 	else:
-		compile(config, proj_dir)
+		print "%s does not exist. Skipping compile."
 

@@ -1,6 +1,6 @@
 # [CoffeeScript][] -> Javascript compiler plugin for Titanium Projects.
 
-The ti_coffee_plugin simply scans your Titanium project's `Resources` folder at build time and looks for files with the `.coffee` extension. When it finds such files, it runs the CoffeeScript compiler (`coffee -c`) to produce a Javascript file of the same name.  E.g., `win.coffee` would become `win.js`.
+The ti_coffee_plugin simply scans your Titanium project's `CoffeeSources` folder at build time and looks for files with the `.coffee` extension. When it finds such files, it runs the CoffeeScript compiler (`coffee -c`) to produce a Javascript file of the same name in your projects 'Resources' folder.  E.g., `CoffeeSources/win.coffee` would become `Resources/win.js`.
 
 # Setup
 
@@ -41,8 +41,6 @@ Build-time plugins for Titanium projects are invoked if the plugin is registered
 The `sample/` folder contains a very simple `app.coffee` as a proof-of-concept.  You can copy that file into a new project, then run the project to see how it works.  To do that successfully, you'll also need to update your `tiapp.xml` following the example inside `tiapp.xml.example`.
 
 # Disadvantages of Using This Plugin
-
-- Your .coffee files will also end up in the application package that gets delivered to the device/simulator/emulator.  Unfortunately, the Titanium build plugins don't (currently) get notified when the packaging is about to occur.  They are just notified once: before the build begins.  Of course, your .coffee files are plain text and the packaging (at least on Android, but I imagine on iOS as well) compresses them.
 
 - There might be implications when using the upcoming "fastdev" feature for Android, whereby only changed files are served up to the application being tested on device or in the emulator.  Because the updating of a .coffee file is not going to be useful unless the Javascript also gets generated, you would have to re-build more often that you would if you were just updating Javascript files.  The difference may not be too significant, however.  We'll see once the fastdev feature is released.
 
