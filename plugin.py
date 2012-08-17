@@ -97,7 +97,12 @@ def get_md5_digest(path):
 
 def build_coffee(path, targetpath):
 	debug('Compiling %s' % path)
-	command_args = ['coffee', '-b', '-c', '-o', targetpath, path]
+	
+	if "app.coffee" in path:
+		command_args = ['coffee', '-b', '-c', '-o', targetpath, path]
+	else:
+		command_args = ['coffee', '-c', '-o', targetpath, path]
+
 	if not os.path.exists(targetpath):
 		os.makedirs(targetpath)
 	process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
